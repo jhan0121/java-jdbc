@@ -1,5 +1,6 @@
 package com.interface21.jdbc.core;
 
+import com.interface21.dao.DataAccessException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -15,28 +16,18 @@ public class JdbcTemplate {
     private static final Logger log = LoggerFactory.getLogger(JdbcTemplate.class);
 
     private final DataSource dataSource;
+    private final ParameterBinder parameterBinder;
 
     public JdbcTemplate(final DataSource dataSource) {
         this.dataSource = dataSource;
+        this.parameterBinder = ParameterBinder.init();
     }
 
     public void executeUpdate(
             final String sql,
             final Object... parameters
     ) {
-        try (
-                final Connection connection = dataSource.getConnection();
-                final PreparedStatement preparedStatement = connection.prepareStatement(sql)
-        ) {
-
-            log.debug("query : {}", sql);
-
-            bindParameters(preparedStatement, parameters);
-            preparedStatement.executeUpdate();
-        } catch (final SQLException e) {
-            log.error(e.getMessage(), e);
-            throw new RuntimeException(e);
-        }
+        executeSql(sql, PreparedStatement::executeUpdate, parameters);
     }
 
     public <T> List<T> execute(
@@ -44,26 +35,15 @@ public class JdbcTemplate {
             final RowMapper<T> rowMapper,
             final Object... parameters
     ) {
-        try (
-                final Connection connection = dataSource.getConnection();
-                final PreparedStatement preparedStatement = connection.prepareStatement(sql)
-        ) {
-            log.debug("query : {}", sql);
-
-            bindParameters(preparedStatement, parameters);
-
-            try (final ResultSet rs = preparedStatement.executeQuery()) {
+        return executeSql(sql, preparedStatement -> {
+            try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                 final List<T> result = new ArrayList<>();
-                if (rs.next()) {
-                    result.add(rowMapper.mapRow(rs));
+                if (resultSet.next()) {
+                    result.add(rowMapper.mapRow(resultSet));
                 }
                 return result;
             }
-
-        } catch (final SQLException e) {
-            log.error(e.getMessage(), e);
-            throw new RuntimeException(e);
-        }
+        }, parameters);
     }
 
     public <T> T executeObject(
@@ -71,32 +51,38 @@ public class JdbcTemplate {
             final RowMapper<T> rowMapper,
             final Object... parameters
     ) {
-        try (
-                final Connection connection = dataSource.getConnection();
-                final PreparedStatement preparedStatement = connection.prepareStatement(sql)
-        ) {
-            log.debug("query : {}", sql);
-
-            bindParameters(preparedStatement, parameters);
+        return executeSql(sql, preparedStatement -> {
             try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                 if (resultSet.next()) {
                     return rowMapper.mapRow(resultSet);
                 }
+                return null;
             }
+        }, parameters);
+    }
 
-            return null;
+    private <T> T executeSql(String sql, JdbcCallback<T> callback, Object... parameters) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+
+            log.debug("query : {}", sql);
+            bindParameters(preparedStatement, parameters);
+
+            return callback.execute(preparedStatement);
+
         } catch (final SQLException e) {
             log.error(e.getMessage(), e);
-            throw new RuntimeException(e);
+            throw new DataAccessException(e);
         }
     }
+
 
     private void bindParameters(
             final PreparedStatement preparedStatement,
             final Object... parameters
     ) throws SQLException {
         for (int i = 0; i < parameters.length; i++) {
-            preparedStatement.setString(i + 1, parameters[i].toString());
+            parameterBinder.bindParameter(preparedStatement, i + 1, parameters[i]);
         }
     }
 }
