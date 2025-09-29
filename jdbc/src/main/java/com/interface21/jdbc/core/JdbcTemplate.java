@@ -38,7 +38,7 @@ public class JdbcTemplate {
         return executeSql(sql, preparedStatement -> {
             try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                 final List<T> result = new ArrayList<>();
-                if (resultSet.next()) {
+                while (resultSet.next()) {
                     result.add(rowMapper.mapRow(resultSet));
                 }
                 return result;
