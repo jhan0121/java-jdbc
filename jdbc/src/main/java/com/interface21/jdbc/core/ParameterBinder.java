@@ -6,6 +6,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.sql.Types;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -63,10 +64,22 @@ public class ParameterBinder {
             final int index,
             final Object parameter
     ) throws SQLException {
+        if (parameter == null) {
+            setNull(preparedStatement, index);
+            return;
+        }
+
         final TypeBinder typeBinder = bindCommand.get(parameter.getClass());
         if (typeBinder == null) {
             throw new DataAccessException("지원하지 않는 자료형입니다.: " + parameter.getClass());
         }
         typeBinder.bind(preparedStatement, index, parameter);
+    }
+
+    private void setNull(
+            final PreparedStatement preparedStatement,
+            final int index
+    ) throws SQLException {
+        preparedStatement.setNull(index, Types.OTHER);
     }
 }
