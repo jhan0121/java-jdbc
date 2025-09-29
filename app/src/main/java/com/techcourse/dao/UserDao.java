@@ -4,12 +4,8 @@ import com.interface21.jdbc.core.JdbcTemplate;
 import com.techcourse.domain.User;
 import java.util.List;
 import javax.sql.DataSource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class UserDao {
-
-    private static final Logger log = LoggerFactory.getLogger(UserDao.class);
 
     private final JdbcTemplate jdbcTemplate;
 
@@ -34,12 +30,12 @@ public class UserDao {
     public List<User> findAll() {
         final var sql = "select id, account, password, email from users";
 
-        return jdbcTemplate.execute(sql, rs ->
+        return jdbcTemplate.execute(sql, resultSet ->
                 new User(
-                        rs.getLong("id"),
-                        rs.getString("account"),
-                        rs.getString("password"),
-                        rs.getString("email")
+                        resultSet.getLong("id"),
+                        resultSet.getString("account"),
+                        resultSet.getString("password"),
+                        resultSet.getString("email")
                 )
         );
     }
@@ -47,24 +43,24 @@ public class UserDao {
     public User findById(final Long id) {
         final var sql = "select id, account, password, email from users where id = ?";
 
-        return jdbcTemplate.executeObject(sql, rs ->
+        return jdbcTemplate.executeObject(sql, resultSet ->
                 new User(
-                        rs.getLong("id"),
-                        rs.getString("account"),
-                        rs.getString("password"),
-                        rs.getString("email")
+                        resultSet.getLong("id"),
+                        resultSet.getString("account"),
+                        resultSet.getString("password"),
+                        resultSet.getString("email")
                 ), id);
     }
 
     public User findByAccount(final String account) {
         final var sql = "select id, account, password, email from users where account = ?";
 
-        return jdbcTemplate.executeObject(sql, rs ->
+        return jdbcTemplate.executeObject(sql, resultSet ->
                 new User(
-                        rs.getLong("id"),
-                        rs.getString("account"),
-                        rs.getString("password"),
-                        rs.getString("email")
+                        resultSet.getLong("id"),
+                        resultSet.getString("account"),
+                        resultSet.getString("password"),
+                        resultSet.getString("email")
                 ), account);
     }
 }
