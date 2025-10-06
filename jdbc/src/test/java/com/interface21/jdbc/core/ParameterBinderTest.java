@@ -51,6 +51,7 @@ class ParameterBinderTest {
 
     static Stream<Arguments> supportedTypes() {
         return Stream.of(
+                Arguments.of(null, "Null"),
                 Arguments.of(1, "Integer"),
                 Arguments.of(1L, "Long"),
                 Arguments.of(true, "Boolean"),
