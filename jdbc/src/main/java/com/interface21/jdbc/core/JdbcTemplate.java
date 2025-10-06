@@ -1,6 +1,7 @@
 package com.interface21.jdbc.core;
 
 import com.interface21.dao.DataAccessException;
+import com.interface21.dao.IncorrectResultSizeException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -54,6 +55,9 @@ public class JdbcTemplate {
         List<T> results = query(sql, rowMapper, parameters);
         if (results.isEmpty()) {
             return null;
+        }
+        if (results.size() > 1) {
+            throw new IncorrectResultSizeException("조회 결과 수가 2개 이상입니다: " + results.size());
         }
         return results.getFirst();
     }
