@@ -23,11 +23,11 @@ public class JdbcTemplate {
         this.parameterBinder = ParameterBinder.init();
     }
 
-    public void update(
+    public int update(
             final String sql,
             final Object... parameters
     ) {
-        executeSql(sql, PreparedStatement::executeUpdate, parameters);
+        return executeSql(sql, PreparedStatement::executeUpdate, parameters);
     }
 
     public <T> List<T> query(
@@ -75,7 +75,6 @@ public class JdbcTemplate {
             throw new DataAccessException(e);
         }
     }
-
 
     private void bindParameters(
             final PreparedStatement preparedStatement,
