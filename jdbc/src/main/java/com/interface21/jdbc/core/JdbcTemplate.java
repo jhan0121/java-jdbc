@@ -51,14 +51,11 @@ public class JdbcTemplate {
             final RowMapper<T> rowMapper,
             final Object... parameters
     ) {
-        return executeSql(sql, preparedStatement -> {
-            try (final ResultSet resultSet = preparedStatement.executeQuery()) {
-                if (resultSet.next()) {
-                    return rowMapper.mapRow(resultSet);
-                }
-                return null;
-            }
-        }, parameters);
+        List<T> results = query(sql, rowMapper, parameters);
+        if (results.isEmpty()) {
+            return null;
+        }
+        return results.getFirst();
     }
 
     private <T> T executeSql(String sql, JdbcCallback<T> callback, Object... parameters) {
